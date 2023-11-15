@@ -7,7 +7,7 @@ import java.util.HashMap;
 public class Main {
 	public static void main(String[] args) {
 
-		double alpha = 0.00045890411;
+		double alpha = 0.0045890411;
 		double beta = 0.000696164;
 		double gamma = 0.1625;
 		double delta = 0.006053;
