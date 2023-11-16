@@ -7,85 +7,193 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import javax.swing.*;
+import java.awt.*;
 
-public class LotkaVolterraGraph {
-    private DefaultCategoryDataset createDataset(double alpha, double beta, double gamma, double delta, double initialPrey, double initialPredator, int years) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+public class LotkaVolterraGraph extends JFrame {
+    private DefaultCategoryDataset dataset;
 
-        // this variable will track the amount of prey year-to-year
+    private ChartPanel chartPanel;
+    private JFreeChart chart;
+    double alpha = 0.0045890411;
+    double beta = 0.000696164;
+    double gamma = 0.1625;
+    double delta = 0.006053;
+    double initialPrey = 45;
+    double initialPredator = 21;
+    int years = 50;
+
+    public LotkaVolterraGraph(String title) {
+        super(title);
+
+        // Create the dataset and chart
+        createDataset();
+        chart = createChart();
+
+        // Create and set up the chart panel
+        this.chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new Dimension(800, 600));
+
+        // Add sliders
+        createSlidersFrame();
+
+        // Set up the layout
+        setLayout(new BorderLayout());
+        add(chartPanel, BorderLayout.CENTER);
+
+        pack();
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+
+    private void createSlidersFrame() {
+        JFrame slidersFrame = new JFrame("Sliders");
+        slidersFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        slidersFrame.setLayout(new BorderLayout());
+
+        // Add sliders to the separate frame
+        addSliders(slidersFrame);
+
+        slidersFrame.pack();
+        slidersFrame.setLocationRelativeTo(null);
+        slidersFrame.setVisible(true);
+    }
+
+    private void addSliders(JFrame frame) {
+        JSlider alphaSlider = createDoubleSlider("Alpha", alpha, alpha / 2, alpha * 2, 100000);
+        JSlider betaSlider = createDoubleSlider("Beta", beta, beta / 2, beta * 2, 100000);
+        JSlider gammaSlider = createDoubleSlider("Gamma", gamma, gamma / 2, gamma * 2, 1000);
+        JSlider deltaSlider = createDoubleSlider("Delta", delta, delta / 2, delta * 2, 100000);
+        JSlider initialPreySlider = createDoubleSlider("Initial Prey", initialPrey, initialPrey / 2, initialPrey * 2, 100);
+        JSlider initialPredatorSlider = createDoubleSlider("Initial Predator", initialPredator, initialPredator / 2, initialPredator * 2, 100);
+        JSlider yearsSlider = createDoubleSlider("Years", years, 1, 200, 1);
+
+        JPanel sliderPanel = new JPanel(new GridLayout(7, 2));
+        sliderPanel.add(new JLabel("Adjust Parameters:"));
+        sliderPanel.add(new JLabel()); // Empty label for spacing
+        sliderPanel.add(new JLabel("Alpha:"));
+        sliderPanel.add(alphaSlider);
+        sliderPanel.add(new JLabel("Beta:"));
+        sliderPanel.add(betaSlider);
+        sliderPanel.add(new JLabel("Gamma:"));
+        sliderPanel.add(gammaSlider);
+        sliderPanel.add(new JLabel("Delta:"));
+        sliderPanel.add(deltaSlider);
+        sliderPanel.add(new JLabel("Initial Prey:"));
+        sliderPanel.add(initialPreySlider);
+        sliderPanel.add(new JLabel("Initial Predator:"));
+        sliderPanel.add(initialPredatorSlider);
+        sliderPanel.add(new JLabel("Years:"));
+        sliderPanel.add(yearsSlider);
+
+        frame.add(sliderPanel, BorderLayout.CENTER);
+
+        // Add listeners to the sliders to update the parameters and chart
+        alphaSlider.addChangeListener(e -> {
+            alpha = alphaSlider.getValue() / 100000.0;
+            updateChart();
+        });
+
+        betaSlider.addChangeListener(e -> {
+            beta = betaSlider.getValue() / 100000.0;
+            updateChart();
+        });
+
+        gammaSlider.addChangeListener(e -> {
+            gamma = gammaSlider.getValue() / 1000.0;
+            updateChart();
+        });
+
+        deltaSlider.addChangeListener(e -> {
+            delta = deltaSlider.getValue() / 100000.0;
+            updateChart();
+        });
+
+        initialPreySlider.addChangeListener(e -> {
+            initialPrey = initialPreySlider.getValue();
+            updateChart();
+        });
+
+        initialPredatorSlider.addChangeListener(e -> {
+            initialPredator = initialPredatorSlider.getValue();
+            updateChart();
+        });
+
+        yearsSlider.addChangeListener(e -> {
+            years = yearsSlider.getValue();
+            updateChart();
+        });
+    }
+
+    private JSlider createDoubleSlider(String label, double initialValue, double min, double max, int scale) {
+        int scaledInitialValue = (int) (initialValue * scale);
+        int scaledMin = (int) (min * scale);
+        int scaledMax = (int) (max * scale);
+
+        JSlider slider = new JSlider(JSlider.HORIZONTAL, scaledMin, scaledMax, scaledInitialValue);
+        slider.setMajorTickSpacing((int) ((max - min) * scale) / 5);
+        slider.setMinorTickSpacing((int) ((max - min) * scale) / 10);
+        slider.setPaintTicks(true);
+        slider.setPaintLabels(true);
+
+        JLabel sliderLabel = new JLabel(label);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(sliderLabel, BorderLayout.NORTH);
+        panel.add(slider, BorderLayout.CENTER);
+
+        slider.addChangeListener(e -> {
+            double scaledValue = slider.getValue() / (double) scale;
+            System.out.println(label + ": " + scaledValue);
+            // You can use the scaledValue as needed (e.g., update your chart parameters)
+        });
+
+        return slider;
+    }
+
+
+    private void createDataset() {
+        dataset = new DefaultCategoryDataset();
+
         double prey = initialPrey;
-
-        // this variable will track the amount of predators year-to-year
         double predator = initialPredator;
 
-        // we then plot the current prey value for initial population
         dataset.addValue(prey, "Prey", "0");
-
-        // we then plot the current predator value for initial population
         dataset.addValue(predator, "Predator", "0");
 
-        // this essentially runs per year, from 1 to 100 years in our case (specified by the years variable)
         for (int t = 1; t <= years; t++) {
-
-            // this finds the change in prey per year. This is the equivalent to the lotka-volterra equation for prey
             double dPrey = alpha * prey - beta * prey * predator;
-
-            // this finds the change in predators per year. This is the equivalent to the lotka-volterra equation for predators
             double dPredator = delta * prey * predator - gamma * predator;
 
-            // we then add the change in prey to the prey after we calculate the prey
             prey += dPrey;
-
-            // we do the same for the predators
             predator += dPredator;
 
-            // we then plot the current prey value for the year we calculated
             dataset.addValue(prey, "Prey", String.valueOf(t));
-
-            // we then plot the current predator value for the year we calculated
             dataset.addValue(predator, "Predator", String.valueOf(t));
         }
-
-
-
-        return dataset;
     }
 
-    public JFreeChart createChart(double alpha, double beta, double gamma, double delta, double initialPrey, double initialPredator, int timeSteps) {
-        DefaultCategoryDataset dataset = createDataset(alpha, beta, gamma, delta, initialPrey, initialPredator, timeSteps);
-
-        JFreeChart chart = ChartFactory.createLineChart(
-                "Orca vs Sea Lion Population Predictions",
-                "Year",
-                "Population (thousands)",
-                dataset,
-                PlotOrientation.VERTICAL,
-                true,
-                true,
-                false
+    private JFreeChart createChart() {
+        return ChartFactory.createLineChart(
+            "Lotka-Volterra Model",
+            "Year",
+            "Population",
+            dataset,
+            PlotOrientation.VERTICAL,
+            true,
+            true,
+            false
         );
-
-        for (int r = 0; r < dataset.getRowCount(); r++) {
-            String series = (String) dataset.getRowKey(r);
-            for (int c = 0; c < dataset.getColumnCount(); c++) {
-                System.out.println(series
-                    + ", " + dataset.getColumnKey(c)
-                    + ", " + dataset.getValue(r, c));
-            }
-        }
-
-        return chart;
     }
 
-    // Display the chart
-    public void displayChart(JFreeChart chart) {
-        ChartPanel chartPanel = new ChartPanel(chart);
-        chartPanel.setPreferredSize(new java.awt.Dimension(800, 600));
-        JFrame frame = new JFrame("Lotka-Volterra Model");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.getContentPane().add(chartPanel);
-        frame.pack();
-        frame.setVisible(true);
+    private void updateChart() {
+        createDataset();
+        chart.getCategoryPlot().setDataset(dataset);
+        chart.fireChartChanged();
+        chartPanel.repaint();
+
     }
 
+    public static void main(String[] args) {
+        new LotkaVolterraGraph("Lotka-Volterra Model");
+    }
 }
