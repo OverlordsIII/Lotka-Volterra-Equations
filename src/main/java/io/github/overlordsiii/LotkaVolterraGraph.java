@@ -48,6 +48,7 @@ public class LotkaVolterraGraph extends JFrame {
 
     private void createSlidersFrame() {
         JFrame slidersFrame = new JFrame("Sliders");
+        slidersFrame.setSize(new Dimension(1000, 1000));
         slidersFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         slidersFrame.setLayout(new BorderLayout());
 
@@ -60,10 +61,13 @@ public class LotkaVolterraGraph extends JFrame {
     }
 
     private void addSliders(JFrame frame) {
-        JSlider alphaSlider = createDoubleSlider("Alpha", alpha, alpha / 4, alpha * 4, 100000);
-        JSlider betaSlider = createDoubleSlider("Beta", beta, beta / 4, beta * 4, 100000);
-        JSlider gammaSlider = createDoubleSlider("Gamma", gamma, gamma / 4, gamma * 4, 1000);
-        JSlider deltaSlider = createDoubleSlider("Delta", delta, delta / 4, delta * 4, 100000);
+        JSlider alphaSlider = createDoubleSlider("Alpha", alpha, alpha / 64, alpha * 64, 100000);
+        JSlider betaSlider = createDoubleSlider("Beta", beta, beta / 64, beta * 64, 100000);
+        JSlider gammaSlider = createDoubleSlider("Gamma", gamma, gamma / 64, gamma * 64, 1000);
+        JSlider deltaSlider = createDoubleSlider("Delta", delta, delta / 64, delta * 64, 100000);
+        JSlider initialPreySlider = createDoubleSlider("Initial Prey", initialPrey, initialPrey / 2, initialPrey * 2, 100);
+        JSlider initialPredatorSlider = createDoubleSlider("Initial Predator", initialPredator, initialPredator / 2, initialPredator * 2, 100);
+        JSlider yearsSlider = createDoubleSlider("Years", years, 1, 200, 1);
 
         JPanel sliderPanel = new JPanel(new GridLayout(7, 2));
         sliderPanel.add(new JLabel("Adjust Parameters:"));
@@ -76,6 +80,12 @@ public class LotkaVolterraGraph extends JFrame {
         sliderPanel.add(gammaSlider);
         sliderPanel.add(new JLabel("Delta:"));
         sliderPanel.add(deltaSlider);
+        sliderPanel.add(new JLabel("Initial Prey:"));
+        sliderPanel.add(initialPreySlider);
+        sliderPanel.add(new JLabel("Initial Predator:"));
+        sliderPanel.add(initialPredatorSlider);
+        sliderPanel.add(new JLabel("Years:"));
+        sliderPanel.add(yearsSlider);
 
         frame.add(sliderPanel, BorderLayout.CENTER);
 
@@ -97,6 +107,21 @@ public class LotkaVolterraGraph extends JFrame {
 
         deltaSlider.addChangeListener(e -> {
             delta = deltaSlider.getValue() / 100000.0;
+            updateChart();
+        });
+
+        initialPreySlider.addChangeListener(e -> {
+            initialPrey = initialPreySlider.getValue();
+            updateChart();
+        });
+
+        initialPredatorSlider.addChangeListener(e -> {
+            initialPredator = initialPredatorSlider.getValue();
+            updateChart();
+        });
+
+        yearsSlider.addChangeListener(e -> {
+            years = yearsSlider.getValue();
             updateChart();
         });
     }
